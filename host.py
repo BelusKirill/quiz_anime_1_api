@@ -64,18 +64,29 @@ def get_response_en(question_id):
 
 if __name__ == '__main__':
     try:
-        filename = open("logWSGI.txt")
+        #log
+        logging.basicConfig(level=logging.DEBUG, filename="logWSGI.log", filemode="w")
+        logger = logging.getLogger(__name__)
 
-        logger = logging.getLogger('logWSGI')
-        logger.setLevel(10)
-        logger.info("Logging configuration done")
+        ch = logging.FileHandler("http-log.log")
+        ch.setLevel(logging.DEBUG)
 
+        formatter = logging.Formatter("[%(levelname)s] %(message)s",
+                              "%Y-%m-%d %H:%M:%S")
 
+        ch.setFormatter(formatter)
+
+        httpLogger = logging.getLogger("HTTP")
+        httpLogger.addHandler(ch)
+        httpLogger.addFilter(logging.Filter("HTTP"))
+
+        #param server
         ip = getData('host', 'ip')
         port = getData('host', 'port', int)
         add_log(f'Start server {ip}:{port}','host')
 
-        http_server = WSGIServer((str(ip), port), app, log=logger)
+        #start server
+        http_server = WSGIServer((str(ip), port), app, log=httpLogger)
         http_server.serve_forever()
 
         add_log(f'Quit server {ip}:{port}','host')
